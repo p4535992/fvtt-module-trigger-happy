@@ -510,7 +510,10 @@ export class TriggerHappy {
     const entityLinks = Object.keys(CONFIG).concat(this.arrayTriggers);
     entityLinks.push(...this.registeredEffects);
 
-    const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
+    //const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
+    const entityMatchRgx = `@(${entityLinks.join('|')})\\[((?:[^\[\\]]+|\\[(?:[^\\[\\]]+|\\[[^\\[\\]]*\\])*\\])*)\\](?:{([^}]+)})?`;
+    
+    
     const rgx = new RegExp(entityMatchRgx, 'ig');
 
     const entityMatchRgxTagger = `@(Tag)\\[([^\\]]+)\\]`;
@@ -1397,10 +1400,13 @@ export class TriggerHappy {
   }
 
   async _onCanvasReady(canvas) {
-    const triggers = this.triggers.filter((trigger) => this._isSceneTrigger(canvas.scene, trigger));
-    await this._executeTriggers(triggers);
-    canvas.stage.on('mousedown', (ev) => this._onMouseDown(ev));
-    this._parseJournals();
+    try {
+      const triggers = this.triggers.filter((trigger) => this._isSceneTrigger(canvas.scene, trigger));
+      await this._executeTriggers(triggers);
+      canvas.stage.on('mousedown', (ev) => this._onMouseDown(ev));
+    } finally {
+      this._parseJournals();
+    }
   }
 
   _getMousePosition(event) {
