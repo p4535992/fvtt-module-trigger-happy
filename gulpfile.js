@@ -11,6 +11,7 @@ const less = require('gulp-less');
 const sass = require('gulp-sass');
 const git = require('gulp-git');
 const eslint = require('gulp-eslint');
+const replace = require('gulp-replace');
 
 const argv = require('yargs').argv;
 const del = require('del');
@@ -32,8 +33,8 @@ function getConfig() {
 function getManifest() {
   const json = {};
 
-  if (fs.existsSync('.')) {
-    json.root = '.';
+  if (fs.existsSync('src')) {
+    json.root = 'src';
   } else {
     json.root = 'dist';
   }
@@ -128,7 +129,7 @@ const tsConfig = ts.createProject('tsconfig.json', {
 function buildTS() {
   return (
     gulp
-      .src(['./**/*.ts', '!./node_modules/**', '!gulpfile.js'])
+      .src('src/**/*.ts')
       .pipe(tsConfig())
 
       // // eslint() attaches the lint output to the "eslint" property
@@ -151,7 +152,7 @@ function buildTS() {
 function buildJS() {
   return (
     gulp
-      .src(['./**/*.js', '!./node_modules/**', '!gulpfile.js'])
+      .src('src/**/*.js')
 
       // // eslint() attaches the lint output to the "eslint" property
       // // of the file object so it can be used by other modules.
@@ -173,7 +174,7 @@ function buildJS() {
 function buildMJS() {
   return (
     gulp
-      .src(['./**/*.mjs', '!./node_modules/**', '!gulpfile.js'])
+      .src('src/**/*.mjs')
 
       // // eslint() attaches the lint output to the "eslint" property
       // // of the file object so it can be used by other modules.
@@ -193,25 +194,35 @@ function buildMJS() {
  * Build Css
  */
 function buildCSS() {
-  return gulp.src(['./**/*.css', '!./node_modules/**', '!gulpfile.js']).pipe(gulp.dest('dist'));
+  return gulp.src('src/**/*.css').pipe(gulp.dest('dist'));
 }
 
 /**
  * Build Less
  */
 function buildLess() {
-  return gulp.src(['./**/*.less', '!./node_modules/**', '!gulpfile.js']).pipe(less()).pipe(gulp.dest('dist'));
+  return gulp.src('src/**/*.less').pipe(less()).pipe(gulp.dest('dist'));
 }
 
 /**
  * Build SASS
  */
 function buildSASS() {
-  return gulp
-    .src(['./**/*.scss', '!./node_modules/**', '!gulpfile.js'])
-    .pipe(sass().on('error', sass.logError))
-    .pipe(gulp.dest('dist'));
+  return gulp.src('src/**/*.scss').pipe(sass().on('error', sass.logError)).pipe(gulp.dest('dist'));
 }
+
+// /**
+//  * Build Replace
+//  */
+// function buildReplace() {
+//   return gulp.src('dist/**/*.js')
+//     .pipe(replace('export const game = getGame();', ''))
+//     .pipe(replace('export const canvas = getCanvas();', ''))
+//     .pipe(replace('import { canvas, game }', '//import { canvas, game }'))
+//     .pipe(replace('import { game }', '//import { game }'))
+//     .pipe(replace('import { canvas }', '//import { canvas }'))
+//     .pipe(gulp.dest('dist'));
+// };
 
 /**
  * Copy static files
@@ -222,7 +233,6 @@ async function copyFiles() {
     'fonts',
     'assets',
     'icons',
-    'images',
     'templates',
     'packs',
     'module.json',
@@ -231,8 +241,8 @@ async function copyFiles() {
   ];
   try {
     for (const file of statics) {
-      if (fs.existsSync(path.join('.', file))) {
-        await fs.copy(path.join('.', file), path.join('dist', file));
+      if (fs.existsSync(path.join('src', file))) {
+        await fs.copy(path.join('src', file), path.join('dist', file));
       }
     }
     return Promise.resolve();
@@ -245,22 +255,19 @@ async function copyFiles() {
  * Watch for changes for each build step
  */
 function buildWatch() {
-  gulp.watch('./**/*.ts', { ignoreInitial: false }, buildTS);
-  gulp.watch('./**/*.less', { ignoreInitial: false }, buildLess);
-  gulp.watch('./**/*.scss', { ignoreInitial: false }, buildSASS);
-  gulp.watch('./**/*.js', { ignoreInitial: false }, buildJS);
-  gulp.watch('./**/*.mjs', { ignoreInitial: false }, buildMJS);
-  gulp.watch('./**/*.css', { ignoreInitial: false }, buildCSS);
-  gulp.watch(['./fonts', './lang', './templates', './*.json'], { ignoreInitial: false }, copyFiles);
+  gulp.watch('src/**/*.ts', { ignoreInitial: false }, buildTS);
+  gulp.watch('src/**/*.less', { ignoreInitial: false }, buildLess);
+  gulp.watch('src/**/*.scss', { ignoreInitial: false }, buildSASS);
+  gulp.watch('src/**/*.js', { ignoreInitial: false }, buildJS);
+  gulp.watch('src/**/*.mjs', { ignoreInitial: false }, buildMJS);
+  gulp.watch('src/**/*.css', { ignoreInitial: false }, buildCSS);
+  gulp.watch(['src/fonts', 'src/lang', 'src/templates', 'src/*.json'], { ignoreInitial: false }, copyFiles);
 }
 
 /********************/
 /*		CLEAN		*/
 /********************/
 
-gulp.task('clean', function () {
-  clean();
-});
 /**
  * Remove built files from `dist` folder
  * while ignoring source files
@@ -270,14 +277,13 @@ async function clean() {
   const files = [];
 
   // If the project uses TypeScript
-  if (fs.existsSync(path.join('.', `${name}.ts`))) {
+  if (fs.existsSync(path.join('src', `${name}.ts`))) {
     files.push(
       'lang',
       'templates',
       'packs',
       'assets',
       'icons',
-      'images',
       'module',
       'modules',
       `${name}.js`,
@@ -288,7 +294,7 @@ async function clean() {
   }
 
   // If the project uses Less or SASS
-  if (fs.existsSync(path.join('.', `${name}.less`)) || fs.existsSync(path.join('.', `${name}.scss`))) {
+  if (fs.existsSync(path.join('src', `${name}.less`)) || fs.existsSync(path.join('src', `${name}.scss`))) {
     files.push('fonts', `${name}.css`);
   }
 
@@ -300,7 +306,6 @@ async function clean() {
     for (const filePath of files) {
       await fs.remove(path.join('dist', filePath));
     }
-    del('./dist/**', { force: true });
     return Promise.resolve();
   } catch (err) {
     Promise.reject(err);
@@ -322,12 +327,12 @@ async function linkUserData() {
   try {
     if (
       fs.existsSync(path.resolve('.', 'dist', 'module.json')) ||
-      fs.existsSync(path.resolve('.', '.', 'module.json'))
+      fs.existsSync(path.resolve('.', 'src', 'module.json'))
     ) {
       destDir = 'modules';
     } else if (
       fs.existsSync(path.resolve('.', 'dist', 'system.json')) ||
-      fs.existsSync(path.resolve('.', '.', 'system.json'))
+      fs.existsSync(path.resolve('.', 'src', 'system.json'))
     ) {
       destDir = 'systems';
     } else {
@@ -491,11 +496,11 @@ function updateManifest(cb) {
 }
 
 function gitAdd() {
-  return gulp.src(['package', '!./node_modules/**', '!gulpfile.js']).pipe(git.add({ args: '--no-all' }));
+  return gulp.src('package').pipe(git.add({ args: '--no-all' }));
 }
 
 function gitCommit() {
-  return gulp.src(['./*', '!./node_modules/**', '!gulpfile.js']).pipe(
+  return gulp.src('./*').pipe(
     git.commit(`v${getManifest().file.version}`, {
       args: '-a',
       disableAppendPaths: true,
@@ -514,7 +519,7 @@ const execGit = gulp.series(gitAdd, gitCommit, gitTag);
 
 const execBuild = gulp.parallel(buildTS, buildJS, buildMJS, buildCSS, buildLess, buildSASS, copyFiles);
 
-exports.build = gulp.series(clean, execBuild);
+exports.build = gulp.series(clean, execBuild); // , buildReplace
 exports.watch = buildWatch;
 exports.clean = clean;
 exports.link = linkUserData;

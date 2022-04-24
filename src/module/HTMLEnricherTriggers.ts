@@ -1,4 +1,4 @@
-import { TRIGGER_ENTITY_TYPES } from '../trigger.js';
+import { TRIGGER_ENTITY_TYPES } from "./trigger-happy-models";
 
 /**
  * @Door[id]{label}
@@ -7,6 +7,7 @@ import { TRIGGER_ENTITY_TYPES } from '../trigger.js';
  * <a class="sound_link" data-playlist="Music" data-sound="music" data-loop="0">Play Music/music</a>
  */
 export class HTMLEnricherTriggers {
+
   static patchEnrich() {
     // const originalEnrich = TextEditor.enrichHTML;
     // TextEditor.enrichHTML = function (html, options) {
@@ -18,11 +19,12 @@ export class HTMLEnricherTriggers {
   }
 
   static bindRichTextLinks(html) {
+    //@ts-ignore
     const entityLinks = Object.keys(CONFIG).concat(game.triggers.arrayTriggers);
-    for (entity of entityLinks) {
+    for (const entity of entityLinks) {
       const clazz = entity.replace('@', '').toLowerCase() + '_link';
       html.find(clazz).click((ev) => {
-        let element = ev.currentTarget;
+        const element = ev.currentTarget;
         // DO SOMETHING ON THE CLICK ????
       });
     }
@@ -79,7 +81,7 @@ export class HTMLEnricherTriggers {
       const result = `<a class="entity-link broken" draggable="true" data-entity="trigger" data-id="null"><i class="fas fa-unlink"></i> ${text}</a>`;
       return result;
     }
-    let finalLabel = ' ' + text;
+    const finalLabel = ' ' + text;
     // if (noId) {
     //   if (label) {
     //     finalLabel = '[' + label + ']';
@@ -100,13 +102,14 @@ export class HTMLEnricherTriggers {
     const color = HTMLEnricherTriggers.stringToColor(entity.replace('@', '').toLowerCase());
     if (!iconClass) {
       const prefix = 'fa fa-';
-      const currentClass = HTMLEnricherTriggers.fa.find((e) => {
+      const currentClass = HTMLEnricherTriggers.fa.find((e:string) => {
         return e.toLowerCase().includes(clazz);
       });
       if (currentClass) {
         iconClass = prefix + currentClass;
       } else {
-        const rnd = parseInt(Math.random() * HTMLEnricherTriggers.fa.length);
+        const rndS = String(Math.random() * <number>HTMLEnricherTriggers.fa.length);
+        const rnd = parseInt(rndS);
         iconClass = prefix + HTMLEnricherTriggers.fa[rnd];
       }
     }
@@ -127,10 +130,14 @@ export class HTMLEnricherTriggers {
    * @param text
    */
   static enrichAll(text) {
+    //@ts-ignore
     const entityLinks = Object.keys(CONFIG).concat(game.triggers.arrayTriggers);
     // entityLinks.push('Tag');
     // const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
-    const entityMatchRgx = `@(${entityLinks.join('|')})\\[((?:[^\[\\]]+|\\[(?:[^\\[\\]]+|\\[[^\\[\\]]*\\])*\\])*)\\](?:{([^}]+)})?`;
+    // const entityMatchRgx = `@(${entityLinks.join('|',)})\\[((?:[^\[\\]]+|\\[(?:[^\\[\\]]+|\\[[^\\[\\]]*\\])*\\])*)\\](?:{([^}]+)})?`;
+    const entityMatchRgx = `@(${entityLinks.join(
+      '|',
+    )})\\[((?:[^[\\]]+|\\[(?:[^\\[\\]]+|\\[[^\\[\\]]*\\])*\\])*)\\](?:{([^}]+)})?`;
     const rgx = new RegExp(entityMatchRgx, 'ig');
 
     const triggerLines = text
@@ -144,15 +151,15 @@ export class HTMLEnricherTriggers {
     });
 
     for (const line of filteredTriggerLines) {
-      let lineTmp = line;
-      let matchs = lineTmp.matchAll(rgx);
+      const lineTmp = line;
+      const matchs = lineTmp.matchAll(rgx);
       let newStr = '';
       let oldStr = '';
-      for (let match of matchs) {
+      for (const match of matchs) {
         if (!match) {
           continue;
         }
-        let [triggerJournal, entity, id, label] = match;
+        const [triggerJournal, entity, id, label] = match;
         oldStr = oldStr + triggerJournal;
         if (!entity) {
           continue;
@@ -183,7 +190,7 @@ export class HTMLEnricherTriggers {
         newStr = newStr + newText;
       }
 
-      let ind = text.toLowerCase().indexOf(oldStr.toLowerCase());
+      const ind = text.toLowerCase().indexOf(oldStr.toLowerCase());
       text = HTMLEnricherTriggers.replaceBetween(text, ind, ind + oldStr.length, newStr);
     }
     return text;
@@ -218,7 +225,7 @@ export class HTMLEnricherTriggers {
   // }
 
   static stringToColor(stringInput) {
-    let stringUniqueHash = [...stringInput].reduce((acc, char) => {
+    const stringUniqueHash = [...stringInput].reduce((acc, char) => {
       return char.charCodeAt(0) + ((acc << 5) - acc);
     }, 0);
     return `hsl(${stringUniqueHash % 360}, 95%, 35%, 0.5)`;
@@ -227,15 +234,19 @@ export class HTMLEnricherTriggers {
   static icons() {
     // https://stackoverflow.com/questions/27992992/i-need-list-of-all-class-name-of-font-awesome
     const icons = $.map(
-      $.map(document.styleSheets, function (s) {
-        if (s.href && s.href.endsWith('th-fontawesome.css')) return s;
-        return null;
+      //@ts-ignore
+      $.map(document.styleSheets, function (s:CSSStyleSheet) {
+        if (s.href && s.href?.endsWith('th-fontawesome.css')){
+          return s;
+        }else{
+          return null;
+        }
       })[0].rules,
-      function (r) {
-        var result = [];
+      function (r:CSSRule) {
+        const result:string[] = [];
         if (r.cssText.indexOf('::before { content: ') > 0) {
           $.each(r.cssText.split(','), function (i, item) {
-            let res = item.split(':')[0].trim().substring(4);
+            const res = <string>item.split(':')[0]?.trim().substring(4);
             result.push(res);
           });
         }
@@ -244,5 +255,5 @@ export class HTMLEnricherTriggers {
     );
     return icons;
   }
-  static fa = [];
+  static fa:string[] = [];
 }
