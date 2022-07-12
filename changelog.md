@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.8.39
+
+- Add japanese language
+
+## 0.8.38
+
+- Add PR  [Update entity matching to allow up to 2 levels of nested brackets []](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/pull/95) ty to @crnormand
+
+## 0.8.37
+
+- Add again hook `getSceneNavigationContext` for strange use case [[BUG] Doesn't load @scene triggers on game load](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/94)
+
+## 0.8.36
+
+- Removed hook `getSceneNavigationContext` becuase is redondant with `canvasReady`
+
 ## 0.8.35
 
 - Add checker for avoid the reload of trigger when update/delete/create journal if they aren't under the trigger happy folder [himmelweiss comment](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/88)
